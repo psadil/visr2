@@ -1,0 +1,27 @@
+function [  ] = kludgeStart( varargin )
+%kludgeStart Superstititious workaround for VBLSyncTest failures
+
+
+screenNumber=max(Screen('Screens'));
+window.res = Screen('Resolution',screenNumber,[],[],100); % get screen resolution, set refresh rate
+
+window = Screen('OpenWindow',screenNumber);
+
+% test refresh rate
+fps=Screen('FrameRate',window);
+if abs(fps - 100) > 2
+    instr = 1;
+else
+    instr = 0;
+end
+
+sca;
+
+% if error in refresh rate, correct now
+if instr
+    errordlg('Please set the refresh rate to 120');
+end
+
+
+end
+
