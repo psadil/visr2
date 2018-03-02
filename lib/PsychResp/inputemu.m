@@ -170,7 +170,7 @@ deltaT = [];
 idx_mouse = [];
 oemChars = defaultOemChars;
 
-msg = nargchk(1,2,n); %#ok
+msg = nargchk(1,2,n); 
 if ~isempty(msg), return; end
 
 if ~iscell(argin{1}) % single-command mode

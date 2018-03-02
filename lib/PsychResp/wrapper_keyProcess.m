@@ -1,5 +1,5 @@
-function [response, rt, exitFlag] = ...
-    wrapper_keyProcess(keys_pressed, press_times, tStart, expt)
+function [response, rt, exitflag] = ...
+    wrapper_keyProcess(keys_pressed, press_times, trial_start, expt)
 
 % RT is always based on first key press
 
@@ -8,30 +8,30 @@ switch expt
     case 'occularDominance'
         if any(keys_pressed == 102)
             keys_pressed = 39; %RightArrow
-            rt = press_times(102) - tStart;
+            rt = press_times(102) - trial_start;
         elseif any(keys_pressed == 100)
             keys_pressed = 37; %LeftArrow
-            rt = press_times(100) - tStart;
+            rt = press_times(100) - trial_start;
         else
             keys_pressed = keys_pressed(1);
-            rt = press_times(keys_pressed) - tStart;
+            rt = press_times(keys_pressed) - trial_start;
         end
     otherwise
-        rt = press_times(keys_pressed(1)) - tStart;
+        rt = press_times(keys_pressed(1)) - trial_start;
 end
 
 % exit flag and empty responses
 switch keys_pressed(end)
     case KbName('Return') 
-        exitFlag = {'Return'};
+        exitflag = {'Return'};
         keys_forResp = keys_pressed(1:end-1);
         emptyResp = {'Return'};
     case KbName('Escape')
-        exitFlag = {'ESCAPE'};
+        exitflag = {'ESCAPE'};
         keys_forResp = keys_pressed(1:end-1);
-        emptyResp = {'Escape'};
+        emptyResp = {'ESCAPE'};
     otherwise
-        exitFlag = {'OK'};
+        exitflag = {'OK'};
         keys_forResp = keys_pressed;
         emptyResp = {''};
 end

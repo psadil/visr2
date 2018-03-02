@@ -1,6 +1,9 @@
 function [] = waitForSpace(keys,constants,responseHandler)
 
-KbQueueCreate(constants.device, keys.space);
+codes = zeros(1,256);
+codes(KbName({'space'})) = 1;
+
+KbQueueCreate(constants.device, codes);
 KbQueueStart(constants.device);
 
 while 1

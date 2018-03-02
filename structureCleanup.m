@@ -1,4 +1,4 @@
-function structureCleanup(expt, subject, data, constants, varargin)
+function structureCleanup(expt, subject, data, tInfo, constants, varargin)
 % receives structures of values relating to experiment and saves them all.
 % constants must be defined so that it is known where to save the variables
 
@@ -10,14 +10,24 @@ if ~exist(saveDir, 'dir')
 end
 
 % save every list that has been given to windowCleanup
-fNamePrefix = fullfile(saveDir, strjoin({'subject',num2str(subject),expt},'_'));
+fNamePrefix = fullfile(saveDir, ['sub-', num2str(subject, '%03d'), expt]);
 writetable(data, [fNamePrefix,'.csv']);
-for nin = 4:nargin
-    if nin == 4
+writetable(tInfo, [fNamePrefix,'tInfo.csv']);
+for nin = 5:nargin
+    if nin == 5
         save([fNamePrefix,'_',inputname(nin),'.mat'],'constants');
-    else
-        variable = varargin{nin-4};
-        save([fNamePrefix,'_',inputname(nin),'.mat'],'variable');
+    elseif nin == 6
+        expParams = varargin{nin - 5}; %#ok<NASGU>
+        save([fNamePrefix,'_','expParams','.mat'],'expParams');
+    elseif nin == 7
+        input = varargin{nin - 5}; %#ok<NASGU>
+        save([fNamePrefix,'_','input','.mat'],'input');
+    elseif nin == 8
+        window = varargin{nin - 5}; %#ok<NASGU>
+        save([fNamePrefix,'_','window','.mat'],'window');
+    elseif nin == 9
+        stim = varargin{nin - 5}; %#ok<NASGU>
+        save([fNamePrefix,'_','stim','.mat'],'stim');
     end
 end
 

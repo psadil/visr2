@@ -4,7 +4,7 @@ function [] = ...
 if nargin > 5
     vbl = varargin{1};
 else
-    vbl = Screen('Flip', window.pointer);
+    vbl = GetSecs;
 end
 
 for eye = 0:1

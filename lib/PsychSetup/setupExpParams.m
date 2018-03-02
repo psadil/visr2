@@ -1,81 +1,57 @@
-function expParams = setupExpParams( refreshRate, debugLevel, expt )
-%setupDebug setup values specific to debug levels
+function expParams = setupExpParams( refreshRate, debugLevel, expt, stim, data )
 
-% some defaults
-expParams.screen_scale = []; % show at full screen
-expParams.respDelay = 0;
+%{
+Parameters have been set during blocking. This function is mainly to grab
+values that will be useful, or modify them based on debug level.
 
-hz = 10;
+%}
+
+
+%%
+% expParams.instr_scrn_wait_dur_sec = 5;
+% expParams.max_jitter_sec = 1;
 
 %% Set general parameters that change based on debug level only
 switch debugLevel
     case 0
         % Level 0: normal experiment
-        expParams.mondrianHertz = refreshRate/hz;
         expParams.iti = 1; % seconds to wait between each trial
-        expParams.maxCFS = 30; % max duration until arrows are at full contrast
+        expParams.max_cfs_dur_sec = 30; % max duration until arrows are at full contrast
     case 1
-        expParams.mondrianHertz = refreshRate/hz;
-        expParams.iti = 1; % seconds to wait between each trial
-        expParams.maxCFS = 30; % max duration until arrows are at full contrast
+        expParams.iti = .1; % seconds to wait between each trial
+        expParams.max_cfs_dur_sec = 30; % max duration until arrows are at full contrast
 end
 %% Set parameters that change based on experiment (+ debuglevel)
 switch expt
     case 'occularDominance'
-        expParams.nTrials = 40;
-        expParams.maxAlpha = .6;
-        expParams.alpha.mondrian = linspace(1,1,expParams.maxAlpha*100);
-        expParams.alpha.tex = linspace(0,expParams.maxAlpha,expParams.maxAlpha*100);
-        expParams.noiseFadeInDur = 4;
-        expParams.nStudyReps = 1;
+        expParams.n_trial = max(data.trial);
         
-    case {'CFSgonogo', 'practice'}
-        expParams.noiseHertz = refreshRate/hz;
-        expParams.alpha.mondrian = 1;
+    case {'visualRecollection'}
+        expParams.noiseHertz = refreshRate/stim.mondrian_hz;
         
-        switch expt
-            case 'practice'
-                expParams.nTrials = 12;
-                expParams.nLists = expParams.nTrials/12;
-                expParams.nStudyReps = 2;
-                
-            otherwise
-                switch debugLevel
-                    case 0
-                        expParams.nTrials = 120;
-                        expParams.nLists = expParams.nTrials/12;
-                        expParams.nStudyReps = 2;
-                    case 1
-                        expParams.nTrials = 12;
-                        expParams.nLists = expParams.nTrials/12;
-                        expParams.nStudyReps = 1;
-                end
-                
-        end
-        switch debugLevel
-            case 0
-                expParams.maxCFS = 30;
-                expParams.maxCFS_bino = 4;
-                expParams.nTicks_bino = ceil(expParams.maxCFS_bino * expParams.mondrianHertz);
-                
-                expParams.maxCFS_noise = 4;
-                expParams.noiseFadeInDur = 4;
-            case 1
-                expParams.maxCFS = .3;
-                expParams.maxCFS_bino = .3;
-                expParams.nTicks_bino = ceil(expParams.maxCFS_bino * expParams.mondrianHertz);
-                
-                expParams.maxCFS_noise = 3;
-                expParams.noiseFadeInDur = .1;
-        end
+        expParams.n_trial = max(data.trial);
+        expParams.n_list = max(data.list);
+        expParams.n_study_rep = max(data.rep);
         
-        expParams.nTrialsPerList = expParams.nTrials / expParams.nLists;
-        expParams.nCondPerList = expParams.nTrialsPerList / 3;
-        expParams.nTicks_noise = ceil(expParams.maxCFS_noise * expParams.mondrianHertz);
+%         switch debugLevel
+%             case 0
+%                 expParams.max_cfs_dur_sec = 30;
+%                 expParams.max_bino_dur_sec = 4;
+%                 
+%                 expParams.max_name_dur_sec = 30;
+%                 expParams.max_noise_dur_sec = 4;
+%                 expParams.ramp_dur_sec = 4;
+%             case 1
+%                 expParams.max_cfs_dur_sec = .3;
+%                 expParams.max_bino_dur_sec = .3;
+%                 
+%                 expParams.max_name_dur_sec = 0.3;
+%                 expParams.max_noise_dur_sec = 0.3;
+%                 expParams.ramp_dur_sec = .1;
+%         end
+        
 end
 
-%% defaults that need calculating
-expParams.nTicks = ceil(expParams.maxCFS * expParams.mondrianHertz);
 
 
 end

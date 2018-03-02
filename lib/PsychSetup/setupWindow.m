@@ -1,62 +1,59 @@
 function window = setupWindow(constants,input)
 
-window.screenNumber = max(Screen('Screens')); % Choose a monitor to display on
-window.res = Screen('Resolution',window.screenNumber,[],[],input.refreshRate); % get screen resolution, set refresh rate
+window.screen_w_cm = convlength(21,'in','m')*100;
+window.screen_h_cm = convlength(11.75,'in','m')*100;
+window.view_distance_cm = convlength(24,'in','m')*100;
 
-checkRefreshRate(input.refreshRate, input.refreshRate, constants);
+window.screenNumber = 0; % Choose a monitor to display on
 
-try
-    %     Screen('Preference', 'ConserveVRAM', 4096);
+% get screen resolution, set refresh rate
+window.oldRes = Screen('Resolution',window.screenNumber,[],[],input.refreshRate);
 
-    
-    PsychImaging('PrepareConfiguration');
-    %     PsychImaging('AddTask', 'LeftView', 'StereoCrosstalkReduction', 'SubtractOther', .6);
-    %     PsychImaging('AddTask', 'RightView', 'StereoCrosstalkReduction', 'SubtractOther', .6);
+window.black = BlackIndex(window.screenNumber);
+window.white = WhiteIndex(window.screenNumber);
+window.gray = GrayIndex(window.screenNumber);
 
-    PsychImaging('AddTask','General','UseFastOffScreenWindows');
-    window.bgColor = GrayIndex(window.screenNumber);
-    window.white = WhiteIndex(window.screenNumber);
-    [window.pointer, window.winRect] = PsychImaging('OpenWindow',...
-        window.screenNumber, window.bgColor, [], [], [], 1);
-    Screen('BlendFunction', window.pointer, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
-    topPriorityLevel = MaxPriority(window.pointer);
-    Priority(topPriorityLevel);
-    
-    
-    % define some landmark locations to be used throughout
-    [window.xCenter, window.yCenter] = RectCenter(window.winRect);
-    window.center = [window.xCenter, window.yCenter];
-    window.left_half=[window.winRect(1),window.winRect(2),window.winRect(3)/2,window.winRect(4)];
-    window.right_half=[window.winRect(3)/2,window.winRect(2),window.winRect(3),window.winRect(4)];
-    window.top_half=[window.winRect(1),window.winRect(2),window.winRect(3),window.winRect(4)/2];
-    window.bottom_half=[window.winRect(1),window.winRect(4)/2,window.winRect(3),window.winRect(4)];
-    window.imagePlace = CenterRect([0 0 300 300], Screen('Rect',window.pointer));
-    fixCrossDimPix = 10;
-    fixXCoords = [-fixCrossDimPix, fixCrossDimPix, 0, 0];
-    fixYCoords = [0, 0, -fixCrossDimPix, fixCrossDimPix];
-    window.fixCrossCoords = [fixXCoords; fixYCoords];
-    
-    [xc, yc] = RectCenter(window.imagePlace);
-    window.noiseTexesRect = ScaleRect(window.imagePlace, 2, 2);
-    window.noiseTexesRect = CenterRectOnPoint(window.noiseTexesRect,xc,yc);
+PsychImaging('PrepareConfiguration');
+PsychImaging('AddTask', 'General', 'NormalizedHighresColorRange', 1);
 
-    
-    
-    % Get some the inter-frame interval, refresh rate, and the size of our window
-    window.ifi = Screen('GetFlipInterval', window.pointer);
-    window.hertz = FrameRate(window.pointer); % hertz = 1 / ifi
-    [window.width, window.height] = Screen('DisplaySize', window.screenNumber); %in mm CAUTION, MIGHT BE WRONG!!
-    
-    
-    % Font Configuration
-    Screen('TextFont',window.pointer, 'Arial');  % Set font to Arial
-    Screen('TextSize',window.pointer, 28);       % Set font size to 28
-    Screen('TextStyle', window.pointer, 1);      % 1 = bold font
-    Screen('TextColor', window.pointer, [0 0 0]); % Black text
-catch
-    psychrethrow(psychlasterror);
-    windowCleanup(constants)
-end
+% need 32Bit for proper alpha blending, which only barely happens here (and
+% maybe not at all). Though, this asks for the higher precision nicely, and
+% defaults to 16 if not possible
+PsychImaging('AddTask', 'General', 'FloatingPoint32BitIfPossible');
+
+% Mondrians are drawn to offscreenwindow canvas
+% PsychImaging('AddTask','General','UseFastOffScreenWindows');
+
+Screen('Preference', 'SkipSyncTests', input.SkipSyncTests);
+[window.pointer, window.winRect] = ...
+    PsychImaging('OpenWindow', window.screenNumber, window.gray, input.window_rect, [], [], input.stereomode);
+% Make sure the GLSL shading language is supported:
+AssertGLSL;
+
+Screen('BlendFunction', window.pointer, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
+
+topPriorityLevel = MaxPriority(window.pointer);
+Priority(topPriorityLevel);
+
+% define some landmark locations to be used throughout
+[window.xCenter, window.yCenter] = RectCenter(window.winRect);
+
+% Get some the inter-frame interval, refresh rate, and the size of our window
+window.ifi = Screen('GetFlipInterval', window.pointer);
+window.hertz = FrameRate(window.pointer); % hertz = 1 / ifi
+window.width = RectWidth(window.winRect);
+window.height = RectHeight(window.winRect);
+
+checkRefreshRate(window.hertz, input.refreshRate, constants);
+
+% Font Configuration
+window.fontSize = 24;
+
+% Screen('TextFont',window.pointer, 'Arial');
+Screen('TextSize',window.pointer, window.fontSize);
+Screen('TextStyle', window.pointer, 1); % 0=normal,1=bold,2=italic,4=underline,8=outline,32=condense,64=extend.
+Screen('TextColor', window.pointer, window.white);
+
 end
 
 function checkRefreshRate(trueHertz, requestedHertz, constants)

@@ -1,23 +1,12 @@
-function tInfo = setupTInfo( expParams, debugLevel, expt )
-%setupDebug setup values specific to debug levels
+function tInfo = setupTInfo( constants, experiment )
 
-% first tick is always initial empty flip
-switch expt
-    case 'CFSRecall'
-        nTicks = expParams.nTicks_bino + 1;
-    otherwise
-        nTicks = expParams.nTicks + 1;
+switch experiment
+    case 'occularDominance'
+        filename = fullfile(constants.datatable_dir, 'occularDominance_tInfo_blocking.csv');
+    case 'visualRecollection'
+        filename = fullfile(constants.datatable_dir, 'data_tInfo_blocking.csv');        
 end
 
-tInfo = table;
-tInfo.trial = repelem(1:expParams.nTrials, nTicks)';
-tInfo.tick = repmat(1:nTicks, [expParams.nStudyReps, expParams.nTrials])';
-switch debugLevel
-    otherwise
-        tInfo.vbl = NaN(expParams.nTrials*nTicks,expParams.nStudyReps);
-        tInfo.missed = NaN(expParams.nTrials*nTicks,expParams.nStudyReps);
-end
-
-
+tInfo = readtable(filename);
 
 end
