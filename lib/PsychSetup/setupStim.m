@@ -43,7 +43,7 @@ stim.fix_rect = ...
 
 %% Stimulus placement
 
-stim.image_size_deg = 10;
+stim.image_size_deg = 13;
 
 % expecting 300 x 300
 stim.image_size_pix = deg2pix(window.screen_w_cm, window.winRect(3), ...

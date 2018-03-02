@@ -13,7 +13,7 @@ addParameter(ip, 'study', 1, @(x) isnumeric(x));
 addParameter(ip, 'refreshRate', 100, @(x) any(x==[100,60]));
 addParameter(ip, 'stereomode', 1, @(x) any(x==[0,1]));
 addParameter(ip, 'window_rect', [], @(x) length(x)==4); % [0, 0, 1920, 600]
-addParameter(ip, 'SkipSyncTests', 2, @(x) any(x==[0,1,2]));
+addParameter(ip, 'SkipSyncTests', 0, @(x) any(x==[0,1,2]));
 addParameter(ip, 'experiment', 'visual_recall2', @ischar);
 parse(ip,varargin{:});
 input = ip.Results;
@@ -26,9 +26,9 @@ if exit_stat == 1
     return
 end
 
-% if strcmp(input.responder,'user') && input.debugLevel == 0
-%     demographics(constants.subDir);
-% end
+if strcmp(input.responder,'user') && input.debugLevel == 0
+    demographics(constants.subDir);
+end
 
 try
     PsychDefaultSetup(2);

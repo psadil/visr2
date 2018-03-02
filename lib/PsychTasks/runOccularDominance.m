@@ -40,7 +40,7 @@ for trial = 1:expParams.n_trial
         otherwise
             switch data.response{trial}
                 case 'RightArrow'
-                    if strcmp('\RIGHT',data.correct_direction{trial})
+                    if strcmp('\RIGHT',data.answer{trial})
                         showPromptAndWaitForResp(window, 'Correct!',...
                             keys, constants, responseHandler);
                     else
@@ -48,7 +48,7 @@ for trial = 1:expParams.n_trial
                             keys, constants, responseHandler);
                     end
                 case 'LeftArrow'
-                    if strcmp('\LEFT',data.correct_direction{trial})
+                    if strcmp('\LEFT',data.answer{trial})
                         showPromptAndWaitForResp(window, 'Correct!',...
                             keys, constants, responseHandler);
                     else
