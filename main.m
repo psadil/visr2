@@ -15,6 +15,7 @@ addParameter(ip, 'stereomode', 1, @(x) any(x==[0,1]));
 addParameter(ip, 'window_rect', [], @(x) length(x)==4); % [0, 0, 1920, 600]
 addParameter(ip, 'SkipSyncTests', 0, @(x) any(x==[0,1,2]));
 addParameter(ip, 'experiment', 'visual_recall2', @ischar);
+addParameter(ip, 'version', 'MISSING', @ischar);
 parse(ip,varargin{:});
 input = ip.Results;
 

@@ -33,6 +33,8 @@ switch expt
         data.name_dur_max = str2double(data.name_dur_max);
 end
 
+data.version = repmat(get_version_string('version.txt'), [n, 1]); 
+
 data.seed = repelem(scurr.Seed, n)';
 data.rt_robo = ones([n,1]) * 0.2;
 data.response = cell(n,1);
