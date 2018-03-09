@@ -111,7 +111,7 @@ for list = 1:expParams.n_list
     end
     
     
-    %% full text (cue + go/nogo)
+    %% full test (cue + go/nogo)
     for trial = 1:expParams.n_trial
         
         index_data = find((data.rep == 1) & (data.trial == trial) & ...
@@ -142,9 +142,6 @@ for list = 1:expParams.n_list
                 
         switch data.gonogo{index_data}
             case 'name'
-%                 
-%                 index_data = find((data.rep == 2) & (data.trial == trial) & ...
-%                     (data.list == list) & (strcmp(data.phase, 'name')));
                 
                 textures = makeTexs(data.object(index_data), window, stims, 'NAME',data.pair(index_data));
                 keys_response = keys.enter+keys.escape+keys.name+keys.bkspace+keys.space;

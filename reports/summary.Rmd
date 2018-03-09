@@ -1,0 +1,193 @@
+---
+title: "analyze_humans"
+author: "pss"
+date: "April 7, 2017"
+output: html_document
+params:
+  data_dir: data
+  expt: visualRecollection
+  cutoff: 1
+  percentiles: 5
+  # exclude: !r c(1)
+  # low_name: !r c()  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, root.dir = devtools::package_file(), message = FALSE, warning = FALSE, fig.width = 7, fig.asp = 1, fig.path = paste0(file.path(devtools::package_file(), "output", "figures", params$model, params$flag), .Platform$file.sep) )
+
+devtools::load_all()
+
+library(tidyverse)
+library(magrittr)
+library(stringdist)
+library(Hmisc)
+
+targets <- readr::read_csv(file.path(devtools::package_file(),'stims','objectNames_2afc.csv') )
+
+out <- list()
+for (i in 1:dim(targets[1])){
+  out[i] = list(c(targets[i,]$name1, targets[i,]$name2, targets[i,]$name3, targets[i,]$name4, targets[i,]$name5, targets[i,]$name6, targets[i,]$name7, targets[i,]$name8, targets[i,]$name9, targets[i,]$name10, targets[i,]$name11, targets[i,]$name12, targets[i,]$name13, targets[i,]$name14, targets[i,]$name15))
+}
+
+cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+Conditions = c('Not Studied','CFS, Image', 'Binocular, Image')
+
+colmap <- c('Not Studied'=cbPalette[7]
+            ,'Word'=cbPalette[2]
+            ,'CFS'=cbPalette[3]
+            ,'Binocular'=cbPalette[4])
+
+old_theme <- theme_set(theme_classic(base_size = 12)) +
+  theme_update(
+    axis.ticks = element_blank()
+    , axis.line = element_line(size=1)
+    , plot.margin=margin(rep(0,4))
+  )
+```
+
+
+```{r loadData}
+
+s_dirs <- list.files(path = params$data_dir)
+files <- list.files(path = file.path(params$data_dir, s_dirs, 'beh', params$expt), pattern = "n.csv", full.names = TRUE)
+
+d <- lapply(files, read_csv, col_types=cols(pas = col_character())) %>% 
+  bind_rows() %>%
+  mutate(targets = out[object],
+         dl = case_when(phase == "name" ~ map2(targets, response, ~stringdist::stringdist(.x, .y, method="dl")),
+                        phase != "name" ~ list(Inf)),
+         mindist = map_dbl(dl, ~min(.x, na.rm = TRUE)),
+         correct = case_when(phase == "noise" & gonogo == "go" ~ if_else(response=="Return",TRUE,FALSE),
+                             phase == "noise" & gonogo == "nogo" ~ if_else(response=="NO RESPONSE",TRUE,FALSE),
+                             phase == "study" ~ NA,
+                             phase == "name" & mindist < params$cutoff ~ TRUE,
+                             phase == "name" & mindist < params$cutoff ~ FALSE)
+  ) %>%
+  mutate(correct_fct = factor(correct))
+
+```
+
+`r n_distinct(d$subject) - length(params$low_name)` participants worth of data usable data (`r n_distinct(d$subject)` finished the experiment in total, but `r length(params$low_name)` have about 0% correct on naming trials. Note that the participant IDs don't quite match up to the total nunber of participants. The mismatch is because the RAs accidentally skipped a couple of numbers), recruited during the summer and through SONA. We're had been aiming for 60.
+
+`r n_distinct(d$item_test)` items per participant, encountered in lists of 12 items. With three conditions (binocular, cfs, not-studied), there were four items in each condition in each list. Of those four items, three were encountered in a “go” test trial, and one was in a “no-go” test trial. So, 1/4 of test-trials were no-go. This leaves up to 30 items in go trials per condition, per participant (but the actual numer will be different, depending on how many objects were correctly named). 
+
+## Figures
+
+### Naming Accuracy
+
+The following plot shows the proportion of items that participants named correctly. The first plot shows each participant invididually to see which ones didn't try during the naming condition. These ones were excluded from the group-level plot and all further plots.
+
+Note that in this group-level plot (and all other following), each participants' average performance is calculated separetely and then averaged together. Error bars reflect the standard error of the mean, averaging across participant averages (note that I had previously been showing 95% CI).
+
+
+```{r naming}
+
+# d %>%
+#   filter(phase == "name") %>%
+#   ggplot(aes(x=condition, y = correct, color = Condition)) +
+#   stat_summary(fun.data="mean_se") +
+#   scale_color_manual(values = colmap, name= "Condition") +  
+#   # facet_wrap(~subject, nrow = 3) +
+#   geom_hline(yintercept = 0) +
+#   geom_hline(yintercept = .3, linetype = "dashed") +
+#   scale_y_continuous(limits = c(0,1), breaks = c(0,.5,1), name = "Naming Accuracy") +
+#   scale_x_discrete(name = NULL, label = element_blank()) 
+
+# d %<>% filter(!(subject %in% params$low_name)) %>% mutate(subject = forcats::fct_drop(subject))
+
+d %>%
+  filter(phase == "name" & rep == 1) %>%
+  group_by(participant, condition) %>%
+  summarise(correct = sum(correct, na.rm = TRUE) / n()) %>%
+  ggplot(aes(x = condition, y=correct, color = condition)) +
+  # facet_wrap( ~rep) +
+  stat_summary(fun.data="mean_se") +
+  scale_y_continuous(limits = c(0,1), name = "Naming Accuracy") +
+  scale_x_discrete(name = NULL, label = element_blank()) +
+  scale_color_manual(values=colmap, name= "Condition")
+
+
+```
+
+### PAS
+
+Here are the PAS ratings provided to the first and second encounter of items in the study phase. Only items studied in the CFS condition are shown, because these are the only trials in which participants were asked to provide a PAS rating.
+
+Most participants gave ratings of 2 or 3 on most CFS trials. A few were better at stopping the trial before being able to identify the object (provided mostly PAS 2 ratings), but I wouldn't rule out that those participants were simply pressing 2 because they thought that was the 'correct' response.
+
+```{r pas}
+
+d %>%
+  gather(key = rating, value = PAS, pas_1:pas_2) %>%
+  filter(Condition  == "CFS") %>%
+  ggplot(aes(x = PAS, fill = PAS)) +
+  facet_grid( Condition ~ rating) +
+  geom_bar()
+  
+d %>%
+  gather(key = rating, value = PAS, pas_1:pas_2) %>%
+  filter(Condition=="CFS") %>%
+  ggplot(aes(x = PAS, fill = PAS)) +
+  geom_bar() +
+  facet_wrap(~subject, nrow = 6)
+
+
+
+``` 
+
+### Go/No-go accuracy
+
+The following plot shows proportion correct on the no/no-go trials (whether participants either said an item was appearing, or correctly waited). Raw accuracy is high. I didn't calculate anything like d' given that performance was basically at ceiling for all participants, and so d' would be infinity.
+
+```{r noise_correct}
+
+d %>%
+  group_by(subject, Condition) %>%
+  summarise(noise_correct = mean(noise_correct)) %>%
+  ggplot(aes(x=Condition, y=noise_correct, color = Condition)) +
+  stat_summary(fun.data="mean_se") +
+  scale_y_continuous(limits = c(0,1), name = "Go/No-Go Accuracy") +
+  scale_x_discrete(name = NULL, label = element_blank()) +
+  scale_color_manual(values=colmap, name= "Condition") 
+# +
+#   ggsave('noise_accuracy_group.png')
+
+d %>%
+  ggplot(aes(x=Condition, y=noise_correct, color = Condition)) +
+  stat_summary(fun.data="mean_se") +
+  scale_x_discrete(name = NULL, label = element_blank()) +
+  scale_color_manual(values=colmap, name= "Condition") +
+  facet_wrap(~subject, nrow = 3) +
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  scale_y_continuous(limits = c(0,1), breaks = c(0,.5,1), name = "Naming Accuracy") 
+# +
+#   ggsave('noise_accuracy_sub.png', height = params$fig_size[2], width = params$fig_size[1]) 
+
+```
+
+### Percentiles
+
+Percentiles are first calculated within participants, then averaged across participants.
+
+Note that because these lines are conditioned on accurately naming the cue item, there are different numbers of trial in each condition. 
+
+
+```{r percentiles}
+
+p <- seq(from = 1 / params$percentiles, to = 1, length.out = params$percentiles)
+
+d %>% filter(gonogo_answer == "go" 
+                         & noise_correct==1) %>%
+  group_by(Condition, cue_correct_fct, subject) %>%
+  summarise(Percentile = list(p), 
+            RT = list(quantile(rt_noise, probs = p, na.rm = TRUE))) %>%
+  unnest() %>%
+  ggplot(aes(x=Percentile, y=RT, color=Condition, linetype = cue_correct_fct)) +
+  stat_summary(fun.data = 'mean_se') +
+  stat_summary(fun.y = 'mean', geom="line") +
+  scale_x_continuous(limits = c(0,1), breaks = p, name = "Percentile") +
+  scale_y_continuous(limits = c(0,4), name = "RT (seconds) on (Correct) go trials") +
+  scale_color_manual(values=colmap, name= "Condition") 
+
